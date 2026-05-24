@@ -1,0 +1,215 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Theme Variables */
+:root {
+  --bg-main: #0b0c10;
+  --bg-sidebar: #07080c;
+  --bg-header: rgba(11, 12, 16, 0.7);
+  --bg-panel: rgba(31, 40, 51, 0.4);
+  --bg-panel-hover: rgba(31, 40, 51, 0.6);
+  --border-color: rgba(255, 255, 255, 0.07);
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-title: #ffffff;
+  --shadow-color: rgba(102, 252, 241, 0.08);
+  --border-hover: rgba(102, 252, 241, 0.3);
+  --scrollbar-track: #0b0c10;
+  --scrollbar-thumb: #1f2833;
+}
+
+html.light {
+  --bg-main: #f3f4f6;
+  --bg-sidebar: #ffffff;
+  --bg-header: rgba(243, 244, 246, 0.75);
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --bg-panel-hover: rgba(255, 255, 255, 0.9);
+  --border-color: rgba(0, 0, 0, 0.06);
+  --text-main: #1f2937;
+  --text-muted: #4b5563;
+  --text-title: #111827;
+  --shadow-color: rgba(59, 130, 246, 0.04);
+  --border-hover: rgba(59, 130, 246, 0.2);
+  --scrollbar-track: #f3f4f6;
+  --scrollbar-thumb: #d1d5db;
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+.bg-dark-900 {
+  background-color: var(--bg-sidebar);
+}
+.bg-dark-950 {
+  background-color: var(--bg-main);
+}
+
+/* Glassmorphism panels */
+.glass-panel {
+  background: var(--bg-panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Light Mode Overrides */
+html.light .bg-\[\#0b0c10\] {
+  background-color: var(--bg-main) !important;
+}
+
+html.light .bg-[#0b0c10]/70 {
+  background-color: var(--bg-header) !important;
+}
+
+html.light .bg-dark-900 {
+  background-color: var(--bg-sidebar) !important;
+}
+
+html.light .bg-dark-950 {
+  background-color: var(--bg-main) !important;
+}
+
+html.light .glass-panel {
+  background: var(--bg-panel) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-main) !important;
+}
+
+html.light .glass-panel-hover:hover {
+  background: var(--bg-panel-hover) !important;
+  border-color: var(--border-hover) !important;
+  box-shadow: 0 0 30px var(--shadow-color) !important;
+}
+
+html.light .text-gray-100,
+html.light .text-gray-200,
+html.light .text-gray-300,
+html.light .text-white {
+  color: var(--text-main) !important;
+}
+
+html.light .text-gray-400 {
+  color: var(--text-muted) !important;
+}
+
+html.light .text-theme-title {
+  color: var(--text-title) !important;
+}
+
+html.light .border-white\/5,
+html.light .border-white\/10 {
+  border-color: var(--border-color) !important;
+}
+
+html.light header {
+  background-color: var(--bg-header) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.light aside {
+  background-color: var(--bg-sidebar) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: var(--bg-main) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-main) !important;
+}
+
+html.light input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+html.light .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light .border-white\/20 {
+  border-color: var(--border-color) !important;
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-panel-hover:hover {
+  background: rgba(31, 40, 51, 0.6);
+  border-color: rgba(102, 252, 241, 0.3);
+  box-shadow: 0 0 30px rgba(102, 252, 241, 0.08);
+}
+
+/* Vibe button glowing states */
+.vibe-glow-blue:hover {
+  box-shadow: 0 0 20px rgba(96, 165, 250, 0.25);
+  border-color: rgba(96, 165, 250, 0.5);
+}
+.vibe-glow-purple:hover {
+  box-shadow: 0 0 20px rgba(192, 132, 252, 0.25);
+  border-color: rgba(192, 132, 252, 0.5);
+}
+.vibe-glow-red:hover {
+  box-shadow: 0 0 20px rgba(248, 113, 113, 0.25);
+  border-color: rgba(248, 113, 113, 0.5);
+}
+.vibe-glow-yellow:hover {
+  box-shadow: 0 0 20px rgba(251, 146, 60, 0.25);
+  border-color: rgba(251, 146, 60, 0.5);
+}
+.vibe-glow-rose:hover {
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.25);
+  border-color: rgba(244, 63, 94, 0.5);
+}
+.vibe-glow-green:hover {
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.25);
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+/* Glowing typography */
+.text-glow {
+  text-shadow: 0 0 8px rgba(102, 252, 241, 0.4);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0c10;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f2833;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #66fcf1;
+}

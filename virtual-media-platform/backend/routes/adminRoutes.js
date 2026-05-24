@@ -1,0 +1,12 @@
+const express = require('express');
+const router = express.Router();
+
+router.get('/status', async (req, res) => {
+  res.json({
+    success: true,
+    status: 'operational',
+    version: '1.0.0'
+  });
+});
+
+module.exports = router;
