@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Home from '../components/FRONTEND_COMPONENTS.jsx';
+import WatchParty from '../components/WatchParty.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, User, LogIn, LogOut, X, Film, Music, CheckCircle, Play, Pause, XCircle, Heart, Share2,
-  Home as HomeIcon, MessageSquare, Bell, Search, Settings, Sun, Moon
+  Home as HomeIcon, MessageSquare, Bell, Search, Settings, Sun, Moon, Users
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -81,6 +82,8 @@ function App() {
   const [currentMedia, setCurrentMedia] = useState(null);
   const [playing, setPlaying] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [currentTab, setCurrentTab] = useState('home');
+  const [initialRoomId, setInitialRoomId] = useState(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -351,12 +354,61 @@ function App() {
       .catch(() => toast.error('Failed to copy link'));
   };
 
-  // Deep linking for media shared links
+  const handleStartWatchParty = async (media) => {
+    if (!user) {
+      toast.error('Please sign in to start watch parties');
+      return;
+    }
+    const toastId = toast.loading('Initializing watch party...');
+    try {
+      // 1. Create a room
+      const roomRes = await axios.post('/api/rooms', {
+        roomName: `${user.username}'s Watch Party`,
+        description: `Streaming "${media.title}" together!`,
+        isPrivate: false,
+        maxParticipants: 20
+      });
+      
+      if (roomRes.data.success) {
+        const room = roomRes.data.room;
+        
+        // 2. Add video to that room's queue
+        const queueRes = await axios.post(`/api/rooms/${room._id}/queue`, {
+          mediaId: media._id
+        });
+        
+        if (queueRes.data.success) {
+          // 3. Copy room invite link to clipboard
+          const roomLink = `${window.location.origin}/?room=${room._id}`;
+          await navigator.clipboard.writeText(roomLink);
+          toast.success('Watch Party Room created and invite link copied!', { id: toastId });
+          
+          // 4. Redirect host to this room
+          setInitialRoomId(room._id);
+          setCurrentTab('watchParty');
+        } else {
+          toast.error('Failed to add media to party queue', { id: toastId });
+        }
+      } else {
+        toast.error('Failed to create watch party room', { id: toastId });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to initialize watch party share', { id: toastId });
+    }
+  };
+
+  // Deep linking for shared links (media and room)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const mediaId = params.get('media');
     if (mediaId) {
       handlePlayMedia({ _id: mediaId });
+    }
+    const roomId = params.get('room');
+    if (roomId) {
+      setInitialRoomId(roomId);
+      setCurrentTab('watchParty');
     }
   }, []);
 
@@ -367,16 +419,32 @@ function App() {
       {/* Sidebar Nav */}
       <aside className="w-20 bg-dark-900 border-r border-white/5 flex flex-col items-center py-6 gap-8 flex-shrink-0 hidden md:flex">
         {/* Logo Icon */}
-        <div className="cursor-pointer" onClick={() => window.location.reload()}>
+        <div className="cursor-pointer" onClick={() => setCurrentTab('home')}>
           <Logo showText={false} size="sm" />
         </div>
         
         <div className="flex flex-col gap-6 items-center flex-1 mt-6">
-          <button className="p-3 text-cyan-400 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-cyan-400/20" title="Home" onClick={() => window.location.reload()}>
+          <button 
+            className={`p-3 rounded-2xl transition-all ${currentTab === 'home' ? 'text-cyan-400 bg-white/5 rounded-2xl border border-cyan-400/20' : 'text-gray-400 hover:text-white hover:bg-white/5 rounded-2xl'}`} 
+            title="Home" 
+            onClick={() => setCurrentTab('home')}
+          >
             <HomeIcon className="h-5 w-5" />
           </button>
-          <button className="p-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all" title="Messages" onClick={() => toast.success("Messages feature coming soon!")}>
-            <MessageSquare className="h-5 w-5" />
+          <button 
+            className={`p-3 rounded-2xl transition-all ${currentTab === 'watchParty' ? 'text-cyan-400 bg-white/5 border border-cyan-400/20' : 'text-gray-400 hover:text-white hover:bg-white/5 rounded-2xl'}`} 
+            title="Watch Parties" 
+            onClick={() => {
+              if (!user) {
+                toast.error('Please sign in to join watch parties');
+                setAuthMode('login');
+                setShowAuthModal(true);
+                return;
+              }
+              setCurrentTab('watchParty');
+            }}
+          >
+            <Users className="h-5 w-5" />
           </button>
           <button className="p-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all" title="Notifications" onClick={() => toast.success("No new notifications")}>
             <Bell className="h-5 w-5" />
@@ -397,7 +465,7 @@ function App() {
         {/* Top Header Navbar */}
         <header className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#0b0c10]/70 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-[1800px] items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="cursor-pointer" onClick={() => window.location.reload()}>
+            <div className="cursor-pointer" onClick={() => setCurrentTab('home')}>
               <Logo />
             </div>
 
@@ -459,8 +527,12 @@ function App() {
           </div>
         </header>
 
-        {/* Main Home Page */}
-        <Home onPlay={handlePlayMedia} theme={theme} />
+        {/* Main Views */}
+        {currentTab === 'home' ? (
+          <Home onPlay={handlePlayMedia} theme={theme} user={user} onStartWatchParty={handleStartWatchParty} />
+        ) : (
+          <WatchParty user={user} theme={theme} initialRoomId={initialRoomId} />
+        )}
       </div>
 
       {/* Authentication Modal */}

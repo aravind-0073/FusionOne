@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const Home = ({ onPlay, theme }) => {
+const Home = ({ onPlay, theme, user, onStartWatchParty }) => {
   const [trendingMedia, setTrendingMedia] = useState([]);
   const [recommendedMedia, setRecommendedMedia] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
@@ -315,7 +315,7 @@ const Home = ({ onPlay, theme }) => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {searchResults.map((media) => (
-                    <MediaCard key={media._id} media={media} variants={itemVariants} onPlay={onPlay} />
+                    <MediaCard key={media._id} media={media} variants={itemVariants} onPlay={onPlay} user={user} onStartWatchParty={onStartWatchParty} />
                   ))}
                 </div>
               )}
@@ -433,7 +433,7 @@ const Home = ({ onPlay, theme }) => {
                   variants={containerVariants}
                 >
                   {listMedia.map((media) => (
-                    <MediaCard key={media._id} media={media} variants={itemVariants} onPlay={onPlay} />
+                    <MediaCard key={media._id} media={media} variants={itemVariants} onPlay={onPlay} user={user} onStartWatchParty={onStartWatchParty} />
                   ))}
                 </motion.div>
               )}
@@ -472,7 +472,7 @@ const Home = ({ onPlay, theme }) => {
                   variants={containerVariants}
                 >
                   {recommendedMedia.map((media) => (
-                    <MediaCard key={media._id} media={media} variants={itemVariants} onPlay={onPlay} />
+                    <MediaCard key={media._id} media={media} variants={itemVariants} onPlay={onPlay} user={user} onStartWatchParty={onStartWatchParty} />
                   ))}
                 </motion.div>
               )}
@@ -548,9 +548,10 @@ const Home = ({ onPlay, theme }) => {
 // Media Card Component
 // ============================================
 
-const MediaCard = ({ media, variants, onPlay }) => {
+const MediaCard = ({ media, variants, onPlay, user, onStartWatchParty }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [liked, setLiked] = useState(media.userLikeStatus === 'like');
+  const [showShareMenu, setShowShareMenu] = useState(false);
 
   useEffect(() => {
     setLiked(media.userLikeStatus === 'like');
@@ -664,14 +665,59 @@ const MediaCard = ({ media, variants, onPlay }) => {
             >
               <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-rose-500 text-rose-500' : ''}`} />
             </motion.button>
-            <motion.button
-              onClick={handleShare}
-              className="p-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-gray-300 hover:text-white transition-all"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Share2 className="w-3.5 h-3.5" />
-            </motion.button>
+            <div className="relative">
+              <motion.button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowShareMenu(!showShareMenu); }}
+                className="p-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-gray-300 hover:text-white transition-all"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </motion.button>
+              <AnimatePresence>
+                {showShareMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    className="absolute right-0 bottom-9 z-50 w-44 rounded-xl border border-white/10 bg-slate-950/95 p-1.5 shadow-2xl backdrop-blur-xl"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowShareMenu(false);
+                        const shareUrl = `${window.location.origin}/?media=${media._id}`;
+                        navigator.clipboard.writeText(shareUrl)
+                          .then(() => toast.success('Link copied!'))
+                          .catch(() => toast.error('Failed to copy'));
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-[10px] font-bold text-gray-300 hover:bg-white/10 transition-colors uppercase tracking-wider"
+                    >
+                      Copy Standard Link
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowShareMenu(false);
+                        if (!user) {
+                          toast.error('Please sign in to start watch parties');
+                          return;
+                        }
+                        if (onStartWatchParty) {
+                          onStartWatchParty(media);
+                        }
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-[10px] font-black text-cyan-400 hover:bg-cyan-400/10 transition-colors uppercase tracking-wider"
+                    >
+                      Start Watch Party
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>

@@ -7,6 +7,8 @@ const compression = require('compression');
 const morgan = require('morgan');
 const { Server } = require('socket.io');
 const http = require('http');
+const SocketService = require('./services/socketService');
+
 
 const app = express();
 const server = http.createServer(app);
@@ -92,26 +94,50 @@ io.on('connection', (socket) => {
   console.log(`✓ User connected: ${socket.id}`);
 
   // Room events
-  socket.on('joinRoom', (roomId) => {
-    socket.join(roomId);
-    io.to(roomId).emit('userJoined', { userId: socket.id });
+  socket.on('joinRoom', async ({ roomId, userId, username }) => {
+    socket.roomId = roomId;
+    socket.userId = userId;
+    await SocketService.handleRoomJoin(io, socket, { roomId, userId, username });
   });
 
-  socket.on('leaveRoom', (roomId) => {
-    socket.leave(roomId);
-    io.to(roomId).emit('userLeft', { userId: socket.id });
+  socket.on('leaveRoom', async ({ roomId, userId }) => {
+    await SocketService.handleRoomLeave(io, socket, { roomId, userId });
+    socket.roomId = null;
+    socket.userId = null;
   });
 
   // Queue events
-  socket.on('addToQueue', (data) => {
-    io.to(data.roomId).emit('queueUpdated', data);
+  socket.on('addToQueue', async ({ roomId, items }) => {
+    await SocketService.handleQueueUpdate(io, socket, { roomId, items });
   });
 
-  socket.on('voteMedia', (data) => {
-    io.to(data.roomId).emit('voteUpdated', data);
+  socket.on('voteMedia', async ({ roomId, queueItemId, userId, voteType }) => {
+    await SocketService.handleVote(io, socket, { roomId, queueItemId, userId, voteType });
   });
 
-  socket.on('disconnect', () => {
+  // Chat message event
+  socket.on('sendMessage', async ({ roomId, userId, username, message }) => {
+    await SocketService.handleMessage(io, socket, { roomId, userId, username, message });
+  });
+
+  // Playback synchronization events
+  socket.on('syncPlay', ({ roomId, mediaId, title, position }) => {
+    io.to(roomId).emit('playbackPlay', { mediaId, title, position, timestamp: Date.now() });
+  });
+
+  socket.on('syncPause', ({ roomId, position }) => {
+    io.to(roomId).emit('playbackPause', { position, timestamp: Date.now() });
+  });
+
+  socket.on('syncSeek', ({ roomId, position }) => {
+    io.to(roomId).emit('playbackSeek', { position, timestamp: Date.now() });
+  });
+
+  socket.on('disconnect', async () => {
+    if (socket.roomId && socket.userId) {
+      console.log(`Auto-cleaning room session for user ${socket.userId} in room ${socket.roomId}`);
+      await SocketService.handleRoomLeave(io, socket, { roomId: socket.roomId, userId: socket.userId });
+    }
     console.log(`✗ User disconnected: ${socket.id}`);
   });
 });
