@@ -872,6 +872,9 @@ const liveQueueSchema = new mongoose.Schema({
     addedByUserId: mongoose.Schema.Types.ObjectId,
     addedByUsername: String,
     addedAt: Date,
+    type: String,
+    videoUrl: String,
+    musicUrl: String,
     votes: {
       type: Number,
       default: 0

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Room, LiveQueue, Media } = require('../models');
+const { Room, LiveQueue, Media, Video, Music } = require('../models');
 const { authenticate } = require('../middleware/auth');
 const mongoose = require('mongoose');
 
@@ -101,6 +101,20 @@ router.post('/:id/queue', authenticate, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Item already in queue' });
     }
 
+    let videoUrl = '';
+    let musicUrl = '';
+    if (media.type === 'video') {
+      const videoData = await Video.findOne({ mediaId: media._id });
+      if (videoData) {
+        videoUrl = videoData.videoUrl;
+      }
+    } else if (media.type === 'music') {
+      const musicData = await Music.findOne({ mediaId: media._id });
+      if (musicData) {
+        musicUrl = musicData.musicUrl;
+      }
+    }
+
     const newItem = {
       queueItemId: new mongoose.Types.ObjectId(),
       mediaId: media._id,
@@ -111,6 +125,9 @@ router.post('/:id/queue', authenticate, async (req, res) => {
       addedByUserId: req.user._id,
       addedByUsername: req.user.username,
       addedAt: new Date(),
+      type: media.type,
+      videoUrl,
+      musicUrl,
       votes: 0,
       isPlaying: false
     };
